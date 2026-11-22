@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- قضيب -->
+    <path android:fillColor="#FF8A1F" android:pathData="M30,52h48v4h-48z" />
+    <!-- الأقراص اليسرى -->
+    <path android:fillColor="#FF8A1F" android:pathData="M32,38h7v32h-7z" />
+    <path android:fillColor="#FFB36B" android:pathData="M40,43h5v22h-5z" />
+    <!-- الأقراص اليمنى -->
+    <path android:fillColor="#FF8A1F" android:pathData="M69,38h7v32h-7z" />
+    <path android:fillColor="#FFB36B" android:pathData="M63,43h5v22h-5z" />
+</vector>
