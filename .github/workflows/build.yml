@@ -25,17 +25,23 @@ jobs:
       - name: Build debug APK
         run: gradle assembleDebug --no-daemon --stacktrace
 
-      - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk Tadreeb.apk
+      - name: Rename APKs
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk Tadreeb.apk
+          cp funoon/build/outputs/apk/debug/funoon-debug.apk Funoon.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Tadreeb-apk
-          path: Tadreeb.apk
+          name: apks
+          path: |
+            Tadreeb.apk
+            Funoon.apk
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.${{ github.run_number }}
-          name: خطة التدريب ${{ github.run_number }}
-          files: Tadreeb.apk
+          name: تطبيقات التدريب ${{ github.run_number }}
+          files: |
+            Tadreeb.apk
+            Funoon.apk

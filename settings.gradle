@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "Tadreeb"
-include ':app'
+include ':app', ':funoon'
