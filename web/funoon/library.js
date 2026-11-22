@@ -25,7 +25,7 @@ const LIBRARY = [
   'المشي باليدين من البلانك (Plank Walkout)', 'عجلة البطن (Ab Wheel Rollout)', 'رفع الركبتين من التعلق (Hanging Knee Raise)', 'رفع الساقين من التعلق (Hanging Leg Raise)',
   'من القدمين إلى البار (Toes-to-Bar)', 'الجلوس على شكل L (L-sit)', 'متسلق الجبال (Mountain Climber)', 'الحشرة الميتة (Dead Bug)', 'الطائر والكلب (Bird Dog)', 'الجلوس الروسي (Russian Twist)', 'الرجل الخارق (Superman)',
   // الجري واللياقة
-  'جري هادئ (Easy Run)', 'جري ثابت (Tempo Run)', 'جري سريع (Fast Run)', 'سرعة قصوى (Sprint)', 'انطلاقات (Strides)', 'تسارع (Acceleration Sprint)', 'جري صعود مرتفع (Hill Sprint)',
+  'جري (Run)', 'جري هادئ (Easy Run)', 'جري ثابت (Tempo Run)', 'جري سريع (Fast Run)', 'سرعة قصوى (Sprint)', 'انطلاقات (Strides)', 'تسارع (Acceleration Sprint)', 'جري صعود مرتفع (Hill Sprint)',
   'رفع الركبتين السريع (High Knees)', 'الوثب التبادلي (A-Skip)', 'المشي برفع الركبة (A-March)', 'ركل المؤخرة (Butt Kicks)', 'مشي سريع (Brisk Walk)', 'زحف الدب (Bear Crawl)', 'الملاكمة في الهواء (Shadow Boxing)',
   // الليونة
   'القطة والبقرة (Cat-Cow)', 'القرفصاء العميقة (Deep Squat Hold)', 'إطالة الفخذ الخلفي (Hamstring Stretch)', 'إطالة الفخذ الأمامي (Quad Stretch)', 'إطالة الورك الأمامية (Hip Flexor Stretch)',

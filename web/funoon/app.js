@@ -60,6 +60,7 @@ function tab(name) { HIST.length = 0; VIEW = { name }; render(); window.scrollTo
 window.onAndroidBack = function () {
   if (VIEW.name === 'player') { if (P && !P.finished) { if (confirm('إنهاء التمرين الآن؟')) playerFinish(true); } else tab('list'); return true; }
   if (VIEW.name === 'edit') { if (confirm('الخروج دون حفظ؟')) { HIST.length ? (VIEW = HIST.pop(), render()) : tab('list'); } return true; }
+  if (VIEW.name === 'import') { PARSED = null; }
   if (HIST.length) { VIEW = HIST.pop(); render(); return true; }
   if (VIEW.name !== 'list') { tab('list'); return true; }
   return false;
@@ -70,7 +71,7 @@ function exCount(n) { return n === 1 ? 'تمرين واحد' : (n === 2 ? 'تم�
 function viewList() {
   const cats = ['الكل'].concat(CATEGORIES.filter((c) => DB.workouts.some((w) => w.cat === c)));
   if (cats.indexOf(DB.filter) < 0) DB.filter = 'الكل';
-  let h = '<div class="top"><h1>💪 فنون التدريب</h1><button class="btn sm" data-new>+ جديد</button></div><div class="wrap">';
+  let h = '<div class="top"><h1>💪 فنون التدريب</h1><button class="btn sm ghost" data-import-view>📋 لصق</button><button class="btn sm" data-new>+ جديد</button></div><div class="wrap">';
   h += '<div class="fchips">' + cats.map((c) => '<button class="fc' + (DB.filter === c ? ' on' : '') + '" data-filter="' + esc(c) + '">' + esc(c) + '</button>').join('') + '</div>';
   const list = DB.workouts.filter((w) => DB.filter === 'الكل' || w.cat === DB.filter);
   if (!list.length) h += '<div class="empty">لا توجد تمارين بعد.<br><button class="btn" data-new>+ أنشئ أول تمرين</button></div>';
@@ -157,6 +158,50 @@ function saveEdit() {
   else { const i = DB.workouts.findIndex((w) => w.id === EDIT.id); if (i >= 0) DB.workouts[i] = clone(EDIT); else DB.workouts.unshift(clone(EDIT)); }
   save(); toast('حُفظ التمرين ✓'); tab('list');
 }
+
+
+/* ============ لصق تمرين مكتوب ============ */
+let PARSED = null;
+const IMPORT_EXAMPLE = 'يوم السحب\nعقلة 4 عدات مع ثبات 4 ثوان في أعلى البار، 3 جولات راحة 90 ثانية\nتعلق ثابت 3×30 ثانية راحة 60\nرفع الركبتين من التعلق 3×12 راحة دقيقة\nبلانك جانبي 2×40 ثانية لكل جهة';
+function viewImport() {
+  let h = '<div class="top"><button class="back" data-back><span class="ltr">→</span></button><h1>📋 لصق تمرين مكتوب</h1></div><div class="wrap">';
+  h += '<div class="small">الصق التمرين كما كتبته في الملاحظات، كل تمرين في سطر، فيرتّبه التطبيق: العدّات والأوقات والثبات والجولات والراحة، ونوع التدريب والفئة.</div>';
+  h += '<textarea id="imp-text" class="big" placeholder="مثال:\nعقلة 4 عدات مع ثبات 4 ثوان في أعلى البار، 3 جولات راحة 90\nضغط 3×15 راحة 60\nبلانك 3×45 ثانية">' + esc(DB.importText || '') + '</textarea>';
+  h += '<div class="row" style="margin-top:8px"><button class="btn sm ghost" data-paste>📋 لصق من الحافظة</button><button class="btn sm ghost" data-example>مثال</button><button class="btn sm ghost" data-clear>مسح</button></div>';
+  h += '<button class="btn full" data-parse>⚙ رتّب التمرين</button>';
+  if (PARSED) {
+    const w = PARSED.workout, f = FORMATS[w.format];
+    h += '<div class="card hero" style="margin-top:14px"><div class="row"><span class="fic">' + f.ic + '</span><span class="sp"><b>' + esc(w.name) + '</b><br><span class="small">' + esc(f.ar) + ' • ' + esc(w.cat) + ' • نحو ' + estimateTxt(clone(w)) + '</span></span></div>';
+    const pp = f.params.map((x) => esc(x.ar) + ': ' + esc(w.p[x.k])).join(' • ');
+    h += '<div class="small" style="margin-top:6px">' + pp + '</div></div>';
+    w.exercises.forEach((e, i) => {
+      h += '<div class="excard"><div class="exh"><span class="no">' + (i + 1) + '</span><b class="sp">' + esc(e.name) + '</b><span class="small">' + esc(MODES[e.mode].ic + ' ' + MODES[e.mode].ar) + '</span></div>' +
+        '<div class="prev">' + esc(describe(e)) + (w.format === 'straight' ? ' • ' + setsTxt(e.sets) + ' • راحة ' + e.rest + ' ث' : '') + '</div></div>';
+    });
+    if (PARSED.warnings.length) h += '<div class="card warnc">⚠️ ' + PARSED.warnings.map(esc).join('<br>⚠️ ') + '</div>';
+    if (!w.exercises.length) h += '<div class="card warnc">لم أجد تمارين في النص. اكتب كل تمرين في سطر مع عدده أو وقته.</div>';
+    else h += '<div class="row" style="margin-top:8px"><button class="btn ok sp" data-imp-save>💾 احفظه</button><button class="btn ghost sp" data-imp-edit>✎ راجع وعدّل</button><button class="btn ghost sp" data-imp-play>▶ ابدأ</button></div>';
+  }
+  h += '<h2>طريقة الكتابة</h2><div class="card"><ul class="rules">' +
+    '<li>كل تمرين في سطر: <b>الاسم ثم العدد أو الوقت</b>، مثل «ضغط 15» أو «بلانك 45 ثانية».</li>' +
+    '<li><b>الجولات:</b> «3×15» أو «3 جولات 15 عدة». و<b>الراحة:</b> «راحة 90» أو «راحة دقيقتين».</li>' +
+    '<li><b>الثبات:</b> «عقلة 4 عدات مع ثبات 4 ثوان في أعلى البار».</li>' +
+    '<li><b>الجري:</b> «جري 400 متر × 6 راحة 90 بوتيرة 4:50».</li>' +
+    '<li><b>لكل جهة، والإيقاع، والوزن:</b> «اندفاع 10 لكل رجل»، «ضغط 12 إيقاع 3-1-1»، «سكوات 15 مع حقيبة 5 كغ».</li>' +
+    '<li><b>نوع التدريب</b> في أول سطر: «EMOM 12 دقيقة»، «AMRAP 15 دقيقة»، «تاباتا»، «3 جولات دائرة»، «سلم 1 إلى 5»، «هرم 2 إلى 10»، «ضد الساعة»، «40 ثانية عمل 20 راحة 8 جولات».</li>' +
+    '<li>أول سطر بلا أرقام يصبح اسم التمرين.</li></ul></div><div style="height:20px"></div></div>';
+  return h;
+}
+function doParse() {
+  const t = ($('#imp-text') || {}).value || '';
+  DB.importText = t; save();
+  if (!t.trim()) { toast('الصق نص التمرين أولًا'); return; }
+  try { PARSED = parseWorkoutText(t); } catch (err) { PARSED = { workout: { name: '', format: 'straight', p: {}, exercises: [], cat: '' }, warnings: ['حدث خطأ في القراءة: ' + err.message] }; }
+  render();
+  setTimeout(() => { const c = $('.hero'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50);
+}
+function setsTxt(n) { n = +n; return n === 1 ? 'جولة واحدة' : (n === 2 ? 'جولتان' : (n <= 10 ? n + ' جولات' : n + ' جولة')); }
+function parsedWorkout() { const w = clone(PARSED.workout); w.id = uid(); return w; }
 
 /* ============ المشغّل ============ */
 let P = null;
@@ -329,9 +374,10 @@ function render() {
   else if (VIEW.name === 'player') h = viewPlayer();
   else if (VIEW.name === 'formats') h = viewFormats();
   else if (VIEW.name === 'history') h = viewHistory();
+  else if (VIEW.name === 'import') h = viewImport();
   $('#app').innerHTML = h;
   document.body.classList.toggle('playing', VIEW.name === 'player' && P && !P.finished);
-  document.querySelectorAll('.nav button').forEach((b) => b.classList.toggle('on', b.dataset.tab === (VIEW.name === 'edit' || VIEW.name === 'player' ? 'list' : VIEW.name)));
+  document.querySelectorAll('.nav button').forEach((b) => b.classList.toggle('on', b.dataset.tab === (VIEW.name === 'edit' || VIEW.name === 'player' || VIEW.name === 'import' ? 'list' : VIEW.name)));
   if (VIEW.name === 'player') paintPlayer();
 }
 
@@ -344,6 +390,25 @@ document.addEventListener('click', (e) => {
   if ('back' in d) { window.onAndroidBack(); return; }
   // القائمة
   if ('new' in d) { startEdit(null); return; }
+  if ('importView' in d) { PARSED = null; go({ name: 'import' }); return; }
+  if (VIEW.name === 'import') {
+    if ('parse' in d) { doParse(); return; }
+    if ('example' in d) { $('#imp-text').value = IMPORT_EXAMPLE; return; }
+    if ('clear' in d) { $('#imp-text').value = ''; DB.importText = ''; PARSED = null; save(); render(); return; }
+    if ('paste' in d) {
+      let txt = '';
+      try { if (window.Android && window.Android.paste) txt = window.Android.paste() || ''; } catch (err) { txt = ''; }
+      if (txt) { $('#imp-text').value = txt; toast('لُصق النص'); return; }
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        navigator.clipboard.readText().then((x) => { if (x) { $('#imp-text').value = x; toast('لُصق النص'); } else toast('الحافظة فارغة'); })
+          .catch(() => toast('اضغط مطولًا في المربع ثم «لصق»'));
+      } else toast('اضغط مطولًا في المربع ثم «لصق»');
+      return;
+    }
+    if ('impSave' in d) { const w = parsedWorkout(); DB.workouts.unshift(w); save(); PARSED = null; DB.importText = ''; save(); toast('حُفظ التمرين ✓'); tab('list'); return; }
+    if ('impEdit' in d) { const w = PARSED.workout; startEdit(Object.assign(clone(w), { id: '' })); return; }
+    if ('impPlay' in d) { const w = parsedWorkout(); DB.workouts.unshift(w); save(); PARSED = null; startPlayer(w); return; }
+  }
   if (d.newfmt) { startEdit(null, d.newfmt); return; }
   if (d.filter) { DB.filter = d.filter; save(); render(); return; }
   if (d.play) { const w = DB.workouts.find((x) => x.id === d.play); if (w) startPlayer(w); return; }
@@ -396,6 +461,7 @@ document.addEventListener('click', (e) => {
 });
 
 document.addEventListener('input', (e) => {
+  if (VIEW.name === 'import' && e.target.id === 'imp-text') { DB.importText = e.target.value; save(); return; }
   if (VIEW.name !== 'edit') return;
   const t = e.target, d = t.dataset;
   if (t.id === 'w-name') { EDIT.name = t.value; return; }

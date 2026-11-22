@@ -52,6 +52,20 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public String paste() {
+            try {
+                ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                if (cm == null || !cm.hasPrimaryClip()) return "";
+                ClipData c = cm.getPrimaryClip();
+                if (c == null || c.getItemCount() == 0) return "";
+                CharSequence t = c.getItemAt(0).coerceToText(MainActivity.this);
+                return t == null ? "" : t.toString();
+            } catch (Exception e) {
+                return "";
+            }
+        }
+
+        @JavascriptInterface
         public void copy(final String text) {
             runOnUiThread(new Runnable() {
                 @Override
