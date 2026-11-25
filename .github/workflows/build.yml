@@ -29,6 +29,7 @@ jobs:
         run: |
           cp app/build/outputs/apk/debug/app-debug.apk Tadreeb.apk
           cp funoon/build/outputs/apk/debug/funoon-debug.apk Funoon.apk
+          cp sana/build/outputs/apk/debug/sana-debug.apk Sana.apk
 
       - uses: actions/upload-artifact@v4
         with:
@@ -36,6 +37,7 @@ jobs:
           path: |
             Tadreeb.apk
             Funoon.apk
+            Sana.apk
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
@@ -45,3 +47,4 @@ jobs:
           files: |
             Tadreeb.apk
             Funoon.apk
+            Sana.apk
